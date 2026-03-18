@@ -14,6 +14,7 @@ const SURFACE_LABELS = {
 
 let charts = {};
 let isAuthed = false;
+let queryCache = { key: null, data: null };
 
 // ─── Helpers ───
 
@@ -756,28 +757,55 @@ function renderPartnerTable(data) {
   }).join('');
 }
 
+// ─── Render All ───
+
+function renderAll(data) {
+  renderKPIs(data);
+  renderDailyTrend(data);
+  renderPartnerBar(data);
+  renderPartnerDonut(data);
+  renderEventTypeChart(data);
+  renderSpPctBlockedPartner(data);
+  renderSurfaceChart(data);
+  renderPctBlockedChart(data);
+  renderPartnerTable(data);
+}
+
 // ─── Main Data Load ───
 
-async function loadData() {
+function getCacheKey() {
+  const days = document.getElementById('dateRange').value;
+  const partnerIds = getSelectedPartnerIds().sort().join(',');
+  const active = document.getElementById('activeShopsOnly').checked;
+  return `${days}|${partnerIds}|${active}`;
+}
+
+function renderFromCache() {
+  if (queryCache.data) renderAll(queryCache.data);
+}
+
+async function loadData(forceRefresh = false) {
   const overlay = document.getElementById('loadingOverlay');
   const loadingText = document.getElementById('loadingText');
   const refreshBtn = document.getElementById('refreshBtn');
 
-  overlay.style.display = 'flex';
-  refreshBtn.classList.add('loading');
-
   const days = parseInt(document.getElementById('dateRange').value);
   const partnerIds = getSelectedPartnerIds();
   const activeShopsOnly = document.getElementById('activeShopsOnly').checked;
-  if (partnerIds.length === 0) {
-    overlay.style.display = 'none';
-    refreshBtn.classList.remove('loading');
+  if (partnerIds.length === 0) return;
+
+  // Check cache — skip queries if only source filter changed
+  const cacheKey = getCacheKey();
+  if (!forceRefresh && queryCache.key === cacheKey && queryCache.data) {
+    renderAll(queryCache.data);
     return;
   }
+
+  overlay.style.display = 'flex';
+  refreshBtn.classList.add('loading');
   const queries = buildQueries(days, partnerIds, activeShopsOnly);
 
   try {
-    // Run all 11 queries in parallel for fastest load
     loadingText.textContent = 'Querying BigQuery...';
     const [
       wpmTotals, spTotals, wpmDailyTrend, spDailyTrend,
@@ -798,32 +826,16 @@ async function loadData() {
     ]);
 
     const allData = {
-      wpmTotals,
-      spTotals,
-      wpmDailyTrend,
-      spDailyTrend,
-      wpmByPartner,
-      spByPartner,
-      wpmByEventName,
-      wpmBySurface,
-      wpmEmittedByPartner,
-      wpmBlockedByPartnerForPct,
-      spDeliveredByPartner,
+      wpmTotals, spTotals, wpmDailyTrend, spDailyTrend,
+      wpmByPartner, spByPartner, wpmByEventName, wpmBySurface,
+      wpmEmittedByPartner, wpmBlockedByPartnerForPct, spDeliveredByPartner,
     };
 
-    // Render everything
-    loadingText.textContent = 'Rendering charts...';
-    renderKPIs(allData);
-    renderDailyTrend(allData);
-    renderPartnerBar(allData);
-    renderPartnerDonut(allData);
-    renderEventTypeChart(allData);
-    renderSpPctBlockedPartner(allData);
-    renderSurfaceChart(allData);
-    renderPctBlockedChart(allData);
-    renderPartnerTable(allData);
+    queryCache = { key: cacheKey, data: allData };
 
-    // Update timestamp
+    loadingText.textContent = 'Rendering charts...';
+    renderAll(allData);
+
     const now = new Date();
     document.getElementById('lastUpdated').textContent =
       `Last updated: ${now.toLocaleTimeString()} on ${now.toLocaleDateString()}`;
@@ -958,11 +970,11 @@ async function init() {
     if (isAuthed) loadData();
   });
 
-  // Controls
-  document.getElementById('refreshBtn').addEventListener('click', loadData);
-  document.getElementById('dateRange').addEventListener('change', loadData);
-  document.getElementById('sourceFilter').addEventListener('change', loadData);
-  document.getElementById('activeShopsOnly').addEventListener('change', loadData);
+  // Controls — source filter is render-only (no re-query), rest trigger full reload
+  document.getElementById('refreshBtn').addEventListener('click', () => loadData(true));
+  document.getElementById('dateRange').addEventListener('change', () => loadData());
+  document.getElementById('sourceFilter').addEventListener('change', renderFromCache);
+  document.getElementById('activeShopsOnly').addEventListener('change', () => loadData());
 
   if (authed) {
     loadData();
