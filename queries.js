@@ -54,7 +54,7 @@ function buildQueries(days, selectedPartnerIds) {
         ${pFilterWpm}
     `,
 
-    // 2. SP totals (deduplicated by event_id)
+    // 2. SP totals (deduplicated by event_id, DATA_SHARING feature only)
     spTotals: !isAll ? `
       SELECT
         COUNT(DISTINCT payload.event_id) AS total_blocked_events,
@@ -63,6 +63,7 @@ function buildQueries(days, selectedPartnerIds) {
         UNNEST(payload.api_client_ids) AS api_client_id
       WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
         AND payload.action = 'BLOCKED'
+        AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
     ` : `
       SELECT
@@ -71,6 +72,7 @@ function buildQueries(days, selectedPartnerIds) {
       FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`
       WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
         AND payload.action = 'BLOCKED'
+        AND payload.feature = 'DATA_SHARING'
     `,
 
     // 3. WPM by partner
@@ -89,7 +91,7 @@ function buildQueries(days, selectedPartnerIds) {
       ORDER BY blocked_events DESC
     `,
 
-    // 4. SP by partner (deduplicated by event_id + api_client_id)
+    // 4. SP by partner (deduplicated by event_id + api_client_id, DATA_SHARING only)
     spByPartner: `
       SELECT
         api_client_id,
@@ -98,6 +100,7 @@ function buildQueries(days, selectedPartnerIds) {
         UNNEST(payload.api_client_ids) AS api_client_id
       WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
         AND payload.action = 'BLOCKED'
+        AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
       GROUP BY api_client_id
       ORDER BY blocked_events DESC
@@ -115,7 +118,7 @@ function buildQueries(days, selectedPartnerIds) {
       ORDER BY day
     `,
 
-    // 6. SP daily trend (deduplicated by event_id)
+    // 6. SP daily trend (deduplicated by event_id, DATA_SHARING only)
     spDailyTrend: !isAll ? `
       SELECT
         DATE(event_timestamp) AS day,
@@ -124,6 +127,7 @@ function buildQueries(days, selectedPartnerIds) {
         UNNEST(payload.api_client_ids) AS api_client_id
       WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
         AND payload.action = 'BLOCKED'
+        AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
       GROUP BY day
       ORDER BY day
@@ -134,6 +138,7 @@ function buildQueries(days, selectedPartnerIds) {
       FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`
       WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
         AND payload.action = 'BLOCKED'
+        AND payload.feature = 'DATA_SHARING'
       GROUP BY day
       ORDER BY day
     `,
@@ -193,15 +198,16 @@ function buildQueries(days, selectedPartnerIds) {
 
     // 11. SP total delivered events per partner (for SP % blocked calc)
     // Uses server_pixel_customer_events (batch table) — the actual SP event stream
+    // api_client_id is INT64 here, so use unquoted IDs; CAST to STRING for JS matching
     spDeliveredByPartner: `
       SELECT
-        api_client_id,
+        CAST(api_client_id AS STRING) AS api_client_id,
         COUNT(DISTINCT event_id) AS delivered_events
       FROM \`shopify-dw.buyer_activity.server_pixel_customer_events\`
       WHERE is_success = TRUE
         AND DATE(event_timestamp) >= DATE_SUB(CURRENT_DATE(), ${interval})
-        AND api_client_id IN (${idList})
-      GROUP BY api_client_id
+        AND api_client_id IN (${selectedPartnerIds.join(', ')})
+      GROUP BY 1
       ORDER BY delivered_events DESC
     `,
   };
