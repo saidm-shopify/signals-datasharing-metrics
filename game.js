@@ -37,6 +37,36 @@
   // Castle (store) on the left
   const castle = { x: 10, y: H / 2 - 40, w: 50, h: 80 };
 
+  // Partner logos in the right zone
+  const partnerLogos = [
+    { name: 'TikTok', src: 'https://cdn.brandfetch.io/tiktok.com/w/128/h/128/icon' },
+    { name: 'Snapchat', src: 'https://cdn.brandfetch.io/snapchat.com/w/128/h/128/icon' },
+    { name: 'X', src: 'https://cdn.brandfetch.io/x.com/w/128/h/128/icon' },
+    { name: 'Pinterest', src: 'https://cdn.brandfetch.io/pinterest.com/w/128/h/128/icon' },
+    { name: 'Bing', src: 'https://cdn.brandfetch.io/bing.com/w/128/h/128/icon' },
+  ];
+  const logoImages = [];
+  let badgePositions = [];
+
+  // Preload logo images
+  partnerLogos.forEach(p => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = p.src;
+    logoImages.push({ img, name: p.name });
+  });
+
+  // Partner badges in the right zone
+  const partnerBadges = [
+    { label: 'TT', color: '#ef4444' },   // TikTok
+    { label: 'Sn', color: '#f97316' },   // Snapchat
+    { label: 'X', color: '#8888a0' },    // X (Twitter)
+    { label: 'Pi', color: '#ef4444' },   // Pinterest
+    { label: 'Bi', color: '#3b82f6' },   // Microsoft Bing
+  ];
+  // Pre-compute random positions (regenerated on startGame)
+  let badgePositions = [];
+
   function spawnBeam() {
     beams.push({
       x: castle.x + castle.w + 10,
@@ -160,11 +190,35 @@
     ctx.save();
     ctx.translate(pzoneX + pzoneW / 2, H / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = 'rgba(136, 136, 160, 0.4)';
+    ctx.fillStyle = '#ffffff';
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.3;
     ctx.fillText('Partners', 0, 4);
+    ctx.globalAlpha = 1;
     ctx.restore();
+
+    // Partner logos
+    const logoSize = 20;
+    logoImages.forEach((l, i) => {
+      const pos = badgePositions[i];
+      if (!pos) return;
+      ctx.globalAlpha = 0.6;
+      if (l.img.complete && l.img.naturalWidth > 0) {
+        ctx.drawImage(l.img, pos.x, pos.y, logoSize, logoSize);
+      } else {
+        // Fallback: first letter circle
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
+        ctx.beginPath();
+        ctx.arc(pos.x + logoSize / 2, pos.y + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(l.name[0], pos.x + logoSize / 2, pos.y + logoSize / 2 + 4);
+      }
+      ctx.globalAlpha = 1;
+    });
 
     // Beams (all red)
     beams.forEach(b => {
@@ -234,6 +288,17 @@
   document.addEventListener('keyup', e => { keys[e.key] = false; });
 
   // Public API — called by app.js
+  function generateBadgePositions() {
+    const pzoneW = 50;
+    const pzoneX = W - pzoneW;
+    const logoSize = 20;
+    const padding = 8;
+    badgePositions = logoImages.map((_, i) => ({
+      x: pzoneX + padding + Math.random() * (pzoneW - logoSize - padding * 2),
+      y: 30 + (i * (H - 60)) / logoImages.length + Math.random() * 30,
+    }));
+  }
+
   window.startGame = function () {
     // Stop any existing loop first
     if (animId) cancelAnimationFrame(animId);
@@ -243,6 +308,7 @@
     floatingTexts = [];
     shieldY = H / 2;
     Object.keys(keys).forEach(k => { keys[k] = false; });
+    generateBadgePositions();
     running = true;
     loop();
   };
