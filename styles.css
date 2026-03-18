@@ -548,6 +548,11 @@ body {
 .game-partner-chip svg {
   width: 18px;
   height: 18px;
+  fill: white;
+}
+
+.game-partner-chip svg path {
+  fill: white;
 }
 
 .game-partner-chip:nth-child(1) { background: #1d4ed8; }
