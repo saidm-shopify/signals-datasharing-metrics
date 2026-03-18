@@ -177,13 +177,13 @@
     ctx.lineTo(pzoneX, H);
     ctx.stroke();
     // Partner logos
-    const logoSize = 22;
+    const logoSize = 26;
     logoImages.forEach((l, i) => {
       const pos = badgePositions[i];
       if (!pos) return;
-      ctx.globalAlpha = 0.7;
+      ctx.globalAlpha = 0.9;
       if (l.img.complete) {
-        ctx.drawImage(l.img, pos.x, pos.y, logoSize, logoSize);
+        ctx.drawImage(l.img, pos.x - 2, pos.y - 2, logoSize, logoSize);
       }
       ctx.globalAlpha = 1;
     });
@@ -259,11 +259,12 @@
   function generateBadgePositions() {
     const pzoneW = 50;
     const pzoneX = W - pzoneW;
-    const logoSize = 20;
-    const padding = 8;
+    const logoSize = 22;
+    const count = logoImages.length;
+    const spacing = H / (count + 1);
     badgePositions = logoImages.map((_, i) => ({
-      x: pzoneX + padding + Math.random() * (pzoneW - logoSize - padding * 2),
-      y: 30 + (i * (H - 60)) / logoImages.length + Math.random() * 30,
+      x: pzoneX + (pzoneW - logoSize) / 2,
+      y: spacing * (i + 1) - logoSize / 2,
     }));
   }
 
