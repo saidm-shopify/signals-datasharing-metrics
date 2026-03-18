@@ -125,7 +125,7 @@
       </div>
     </section>
 
-    <!-- Charts Row 1: Daily Trends -->
+    <!-- 1. Daily Blocked Events Trend -->
     <section class="chart-section">
       <div class="chart-row">
         <div class="chart-card wide">
@@ -143,7 +143,78 @@
       </div>
     </section>
 
-    <!-- Charts Row 2: Partner Breakdown -->
+    <!-- 2. % Blocked per Partner (WPM) -->
+    <section class="chart-section">
+      <div class="chart-row">
+        <div class="chart-card wide">
+          <div class="chart-header">
+            <h3>% of Events Blocked per Partner (WPM)</h3>
+            <div class="chart-header-right">
+              <span class="chart-note">Emitted vs Blocked over selected period</span>
+              <button class="btn-sql" data-queries="wpmEmittedByPartner,wpmBlockedByPartnerForPct" title="View SQL">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                SQL
+              </button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <canvas id="pctBlockedChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. % Events Blocked per Partner (SP) -->
+    <section class="chart-section">
+      <div class="chart-row">
+        <div class="chart-card wide">
+          <div class="chart-header">
+            <h3>% of Events Blocked per Partner (SP)</h3>
+            <div class="chart-header-right">
+              <span class="chart-note">Blocked / (Delivered + Blocked)</span>
+              <button class="btn-sql" data-queries="spByPartner,spDeliveredByPartner" title="View SQL">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                SQL
+              </button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <canvas id="spPctBlockedPartnerChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Partner Detail Table -->
+    <section class="chart-section">
+      <div class="chart-card wide">
+        <div class="chart-header">
+          <h3>Partner Detail Table</h3>
+          <button class="btn-sql" data-queries="wpmByPartner,spByPartner,wpmEmittedByPartner,spDeliveredByPartner" title="View SQL">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            SQL
+          </button>
+        </div>
+        <div class="table-wrapper">
+          <table id="partnerTable" class="data-table">
+            <thead>
+              <tr>
+                <th>Partner</th>
+                <th>WPM Blocked</th>
+                <th>SP Blocked</th>
+                <th>Unique Shops</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody id="partnerTableBody">
+              <tr><td colspan="5" class="table-empty">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Partner Breakdown -->
     <section class="chart-section">
       <div class="chart-row two-col">
         <div class="chart-card">
@@ -173,7 +244,7 @@
       </div>
     </section>
 
-    <!-- Charts Row 3: Events & Surface -->
+    <!-- 6. Event Types & Surface -->
     <section class="chart-section">
       <div class="chart-row two-col">
         <div class="chart-card">
@@ -190,27 +261,6 @@
         </div>
         <div class="chart-card">
           <div class="chart-header">
-            <h3>% Events Blocked per Partner (SP)</h3>
-            <div class="chart-header-right">
-              <span class="chart-note">Blocked / (Delivered + Blocked)</span>
-              <button class="btn-sql" data-queries="spByPartner,spDeliveredByPartner" title="View SQL">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                SQL
-              </button>
-            </div>
-          </div>
-          <div class="chart-body">
-            <canvas id="spPctBlockedPartnerChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Charts Row 3b: Surface -->
-    <section class="chart-section">
-      <div class="chart-row two-col">
-        <div class="chart-card">
-          <div class="chart-header">
             <h3>Blocked by Surface (WPM)</h3>
             <button class="btn-sql" data-queries="wpmBySurface" title="View SQL">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
@@ -220,56 +270,6 @@
           <div class="chart-body chart-body-donut">
             <canvas id="surfaceChart"></canvas>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Charts Row 4: % Blocked per Partner -->
-    <section class="chart-section">
-      <div class="chart-row">
-        <div class="chart-card wide">
-          <div class="chart-header">
-            <h3>% of Events Blocked per Partner (WPM)</h3>
-            <div class="chart-header-right">
-              <span class="chart-note">Emitted vs Blocked over selected period</span>
-              <button class="btn-sql" data-queries="wpmEmittedByPartner,wpmBlockedByPartnerForPct" title="View SQL">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                SQL
-              </button>
-            </div>
-          </div>
-          <div class="chart-body">
-            <canvas id="pctBlockedChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Partner Detail Table -->
-    <section class="chart-section">
-      <div class="chart-card wide">
-        <div class="chart-header">
-          <h3>Partner Detail Table</h3>
-          <button class="btn-sql" data-queries="wpmByPartner,spByPartner,wpmEmittedByPartner,spDeliveredByPartner" title="View SQL">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            SQL
-          </button>
-        </div>
-        <div class="table-wrapper">
-          <table id="partnerTable" class="data-table">
-            <thead>
-              <tr>
-                <th>Partner</th>
-                <th>WPM Blocked</th>
-                <th>SP Blocked</th>
-                <th>Unique Shops</th>
-                <th>Duration</th>
-              </tr>
-            </thead>
-            <tbody id="partnerTableBody">
-              <tr><td colspan="5" class="table-empty">Loading...</td></tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </section>
