@@ -71,8 +71,8 @@
     if (keys['ArrowDown'] || keys['s'] || keys['S']) shieldY += moveSpeed;
     shieldY = Math.max(shieldH / 2, Math.min(H - shieldH / 2, shieldY));
 
-    // Spawn beams (~4-5 per second at 60fps)
-    if (Math.random() < 0.07) spawnBeam();
+    // Spawn beams (~3.8 per second at 60fps)
+    if (Math.random() < 0.063) spawnBeam();
 
     // Update beams
     for (let i = beams.length - 1; i >= 0; i--) {
@@ -146,11 +146,25 @@
     ctx.textAlign = 'center';
     ctx.fillText('Shop', castle.x + castle.w / 2, castle.y + castle.h / 2 + 4);
 
-    // Partner zone label
-    ctx.fillStyle = 'rgba(136, 136, 160, 0.3)';
+    // Partner zone (right edge)
+    const pzoneW = 50;
+    const pzoneX = W - pzoneW;
+    ctx.fillStyle = 'rgba(99, 102, 241, 0.06)';
+    ctx.fillRect(pzoneX, 0, pzoneW, H);
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pzoneX, 0);
+    ctx.lineTo(pzoneX, H);
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(pzoneX + pzoneW / 2, H / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = 'rgba(136, 136, 160, 0.4)';
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Partners', W - 30, 16);
+    ctx.fillText('Partners', 0, 4);
+    ctx.restore();
 
     // Beams (all red)
     beams.forEach(b => {
