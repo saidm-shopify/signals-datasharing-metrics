@@ -5,8 +5,9 @@
   const canvas = document.getElementById('gameCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const W = canvas.width;
-  const H = canvas.height;
+  // Read dimensions from HTML attributes (works even when display:none)
+  const W = parseInt(canvas.getAttribute('width')) || 800;
+  const H = parseInt(canvas.getAttribute('height')) || 300;
 
   // roundRect polyfill for older browsers
   if (!ctx.roundRect) {
@@ -269,6 +270,9 @@
   window.startGame = function () {
     // Stop any existing loop first
     if (animId) cancelAnimationFrame(animId);
+    // Ensure canvas resolution matches attributes
+    canvas.width = W;
+    canvas.height = H;
     score = 0;
     beams = [];
     particles = [];
