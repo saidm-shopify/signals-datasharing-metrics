@@ -541,38 +541,40 @@ function renderSpPctBlockedPartner(data) {
     type: 'bar',
     data: {
       labels: rows.map(r => r.name),
-      datasets: [{
-        label: '% Blocked',
-        data: rows.map(r => r.pctBlocked),
-        backgroundColor: rows.map(r => r.pctBlocked > 50 ? '#ef4444cc' : '#a855f7cc'),
-        borderColor: rows.map(r => r.pctBlocked > 50 ? '#ef4444' : '#a855f7'),
-        borderWidth: 1,
-        borderRadius: 4,
-      }],
+      datasets: [
+        {
+          label: 'Delivered (Allowed)',
+          data: rows.map(r => r.delivered),
+          backgroundColor: '#22c55e',
+          borderRadius: 4,
+        },
+        {
+          label: 'Blocked',
+          data: rows.map(r => r.blocked),
+          backgroundColor: '#ef4444',
+          borderRadius: 4,
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      indexAxis: 'y',
       plugins: {
         tooltip: {
           ...makeTooltip(),
           callbacks: {
-            label: ctx => {
-              const r = rows[ctx.dataIndex];
-              return `${r.pctBlocked.toFixed(1)}% blocked (${fmtFull(r.blocked)} / ${fmtFull(r.total)})`;
+            afterBody: items => {
+              const idx = items[0].dataIndex;
+              const r = rows[idx];
+              return `\n% Blocked: ${r.pctBlocked.toFixed(1)}%\nTotal: ${fmtFull(r.total)}`;
             },
           },
         },
-        legend: { display: false },
+        legend: { labels: { color: cd.textColor, usePointStyle: true, padding: 16 } },
       },
       scales: {
-        x: {
-          grid: { color: cd.gridColor },
-          ticks: { color: cd.textColor, callback: v => v + '%' },
-          max: 100,
-        },
-        y: { grid: { display: false }, ticks: { color: cd.textColor } },
+        x: { stacked: true, grid: { display: false }, ticks: { color: cd.textColor } },
+        y: { stacked: true, grid: { color: cd.gridColor }, ticks: { color: cd.textColor, callback: v => fmt(v) } },
       },
     },
   });
