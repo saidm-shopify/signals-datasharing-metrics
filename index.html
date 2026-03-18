@@ -89,10 +89,20 @@
       <button id="authBtn" class="btn-auth">Authorize BigQuery</button>
     </div>
 
-    <!-- Loading Overlay -->
+    <!-- Loading Overlay with Game -->
     <div id="loadingOverlay" class="loading-overlay" style="display:none;">
-      <div class="spinner"></div>
-      <p id="loadingText">Loading metrics...</p>
+      <div class="game-container">
+        <div class="game-header">
+          <h2 class="game-title">Data Shield</h2>
+          <p class="game-subtitle">Block the red beams. Let the green ones through.</p>
+        </div>
+        <canvas id="gameCanvas" width="600" height="320"></canvas>
+        <div class="game-footer">
+          <span class="game-score" id="gameScore">Score: 0</span>
+          <span class="game-hint">Arrow keys or W/S to move</span>
+          <span id="loadingText" class="game-loading">Querying BigQuery...</span>
+        </div>
+      </div>
     </div>
 
     <!-- KPI Cards -->
@@ -305,5 +315,6 @@
 
   <script src="queries.js"></script>
   <script src="app.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>

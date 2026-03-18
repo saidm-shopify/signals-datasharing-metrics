@@ -817,6 +817,7 @@ async function loadData(forceRefresh = false) {
 
   overlay.style.display = 'flex';
   refreshBtn.classList.add('loading');
+  if (window.startGame) window.startGame();
   const queries = buildQueries(days, partnerIds, activeShopsOnly);
 
   try {
@@ -863,6 +864,7 @@ async function loadData(forceRefresh = false) {
     await new Promise(r => setTimeout(r, 2000));
   } finally {
     clearInterval(loadingInterval);
+    if (window.stopGame) window.stopGame();
     overlay.style.display = 'none';
     refreshBtn.classList.remove('loading');
   }
