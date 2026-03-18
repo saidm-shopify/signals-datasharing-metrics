@@ -187,17 +187,6 @@
     ctx.moveTo(pzoneX, 0);
     ctx.lineTo(pzoneX, H);
     ctx.stroke();
-    ctx.save();
-    ctx.translate(pzoneX + pzoneW / 2, H / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '11px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.globalAlpha = 0.3;
-    ctx.fillText('Partners', 0, 4);
-    ctx.globalAlpha = 1;
-    ctx.restore();
-
     // Partner logos
     const logoSize = 20;
     logoImages.forEach((l, i) => {
