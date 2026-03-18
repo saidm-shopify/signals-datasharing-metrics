@@ -15,6 +15,20 @@ const SURFACE_LABELS = {
 let charts = {};
 let isAuthed = false;
 let queryCache = { key: null, data: null };
+let loadingInterval = null;
+
+const LOADING_MESSAGES = [
+  'Querying BigQuery...',
+  'Crunching billions of events...',
+  'Asking BigQuery nicely...',
+  'Counting blocked pixels...',
+  'Scanning monorail tables...',
+  'Almost there, probably...',
+  'Faster than a Looker dashboard...',
+  'Herding data sharing events...',
+  'Deduplicated. Now counting...',
+  'Still faster than opening a spreadsheet...',
+];
 
 // ─── Helpers ───
 
@@ -806,7 +820,12 @@ async function loadData(forceRefresh = false) {
   const queries = buildQueries(days, partnerIds, activeShopsOnly);
 
   try {
-    loadingText.textContent = 'Querying BigQuery...';
+    let msgIdx = 0;
+    loadingText.textContent = LOADING_MESSAGES[0];
+    loadingInterval = setInterval(() => {
+      msgIdx = (msgIdx + 1) % LOADING_MESSAGES.length;
+      loadingText.textContent = LOADING_MESSAGES[msgIdx];
+    }, 2500);
     const [
       wpmTotals, spTotals, wpmDailyTrend, spDailyTrend,
       wpmByPartner, spByPartner, wpmByEventName, wpmBySurface,
@@ -832,8 +851,6 @@ async function loadData(forceRefresh = false) {
     };
 
     queryCache = { key: cacheKey, data: allData };
-
-    loadingText.textContent = 'Rendering charts...';
     renderAll(allData);
 
     const now = new Date();
@@ -845,6 +862,7 @@ async function loadData(forceRefresh = false) {
     loadingText.textContent = 'Error loading data. Check console.';
     await new Promise(r => setTimeout(r, 2000));
   } finally {
+    clearInterval(loadingInterval);
     overlay.style.display = 'none';
     refreshBtn.classList.remove('loading');
   }
