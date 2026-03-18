@@ -190,6 +190,27 @@
         </div>
         <div class="chart-card">
           <div class="chart-header">
+            <h3>% Events Blocked per Partner (SP)</h3>
+            <div class="chart-header-right">
+              <span class="chart-note">Blocked / (Delivered + Blocked)</span>
+              <button class="btn-sql" data-queries="spByPartner,spDeliveredByPartner" title="View SQL">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                SQL
+              </button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <canvas id="spPctBlockedPartnerChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Row 3b: Surface -->
+    <section class="chart-section">
+      <div class="chart-row two-col">
+        <div class="chart-card">
+          <div class="chart-header">
             <h3>Blocked by Surface (WPM)</h3>
             <button class="btn-sql" data-queries="wpmBySurface" title="View SQL">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>

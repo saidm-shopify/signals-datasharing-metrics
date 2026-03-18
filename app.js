@@ -508,6 +508,76 @@ function renderEventTypeChart(data) {
   });
 }
 
+function renderSpPctBlockedPartner(data) {
+  const cd = chartDefaults();
+  destroyChart('spPctBlockedPartner');
+
+  // Build delivered lookup
+  const deliveredMap = {};
+  data.spDeliveredByPartner.forEach(r => {
+    deliveredMap[String(r.api_client_id)] = Number(r.delivered_events);
+  });
+
+  // Build rows: partner name, blocked count, delivered count, % blocked
+  const rows = [];
+  data.spByPartner.forEach(r => {
+    const id = String(r.api_client_id);
+    const blocked = Number(r.blocked_events);
+    const delivered = deliveredMap[id] || 0;
+    const total = delivered + blocked;
+    if (total === 0) return;
+    rows.push({
+      name: partnerIdToName(id),
+      blocked,
+      delivered,
+      total,
+      pctBlocked: (blocked / total) * 100,
+    });
+  });
+
+  rows.sort((a, b) => b.pctBlocked - a.pctBlocked);
+
+  charts.spPctBlockedPartner = new Chart(document.getElementById('spPctBlockedPartnerChart'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.name),
+      datasets: [{
+        label: '% Blocked',
+        data: rows.map(r => r.pctBlocked),
+        backgroundColor: rows.map(r => r.pctBlocked > 50 ? '#ef4444cc' : '#a855f7cc'),
+        borderColor: rows.map(r => r.pctBlocked > 50 ? '#ef4444' : '#a855f7'),
+        borderWidth: 1,
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        tooltip: {
+          ...makeTooltip(),
+          callbacks: {
+            label: ctx => {
+              const r = rows[ctx.dataIndex];
+              return `${r.pctBlocked.toFixed(1)}% blocked (${fmtFull(r.blocked)} / ${fmtFull(r.total)})`;
+            },
+          },
+        },
+        legend: { display: false },
+      },
+      scales: {
+        x: {
+          grid: { color: cd.gridColor },
+          ticks: { color: cd.textColor, callback: v => v + '%' },
+          max: 100,
+        },
+        y: { grid: { display: false }, ticks: { color: cd.textColor } },
+      },
+    },
+  });
+}
+
 function renderSurfaceChart(data) {
   const cd = chartDefaults();
   destroyChart('surface');
@@ -749,6 +819,7 @@ async function loadData() {
     renderPartnerBar(allData);
     renderPartnerDonut(allData);
     renderEventTypeChart(allData);
+    renderSpPctBlockedPartner(allData);
     renderSurfaceChart(allData);
     renderPctBlockedChart(allData);
     renderPartnerTable(allData);
