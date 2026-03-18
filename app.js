@@ -143,7 +143,11 @@ function normalizeRows(rows) {
 
 async function runQuery(sql, label) {
   try {
-    const result = await quick.dw.querySync(sql, null, { timeoutMs: 120000 });
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Query timeout [${label}]`)), 120000)
+    );
+    const query = quick.dw.querySync(sql, null, { timeoutMs: 120000 });
+    const result = await Promise.race([query, timeout]);
     return normalizeRows(result.results || []);
   } catch (err) {
     console.error(`Query failed [${label}]:`, err);
@@ -819,6 +823,14 @@ async function loadData(forceRefresh = false) {
   refreshBtn.classList.add('loading');
   if (window.startGame) window.startGame();
 
+  // Safety net: force-hide overlay after 130s no matter what
+  const safetyTimeout = setTimeout(() => {
+    clearInterval(loadingInterval);
+    if (window.stopGame) window.stopGame();
+    overlay.style.display = 'none';
+    refreshBtn.classList.remove('loading');
+  }, 130000);
+
   try {
     const queries = buildQueries(days, partnerIds, activeShopsOnly);
     let msgIdx = 0;
@@ -863,6 +875,7 @@ async function loadData(forceRefresh = false) {
     loadingText.textContent = 'Error loading data. Check console.';
     await new Promise(r => setTimeout(r, 2000));
   } finally {
+    clearTimeout(safetyTimeout);
     clearInterval(loadingInterval);
     if (window.stopGame) window.stopGame();
     overlay.style.display = 'none';
