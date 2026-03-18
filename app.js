@@ -768,12 +768,13 @@ async function loadData() {
 
   const days = parseInt(document.getElementById('dateRange').value);
   const partnerIds = getSelectedPartnerIds();
+  const activeShopsOnly = document.getElementById('activeShopsOnly').checked;
   if (partnerIds.length === 0) {
     overlay.style.display = 'none';
     refreshBtn.classList.remove('loading');
     return;
   }
-  const queries = buildQueries(days, partnerIds);
+  const queries = buildQueries(days, partnerIds, activeShopsOnly);
 
   try {
     // Run queries in parallel batches to avoid overload
@@ -864,7 +865,8 @@ function formatSql(sql) {
 function openSqlModal(queryKeys) {
   const days = parseInt(document.getElementById('dateRange').value);
   const partnerIds = getSelectedPartnerIds();
-  const queries = buildQueries(days, partnerIds);
+  const activeShopsOnly = document.getElementById('activeShopsOnly').checked;
+  const queries = buildQueries(days, partnerIds, activeShopsOnly);
   const modal = document.getElementById('sqlModal');
   const body = document.getElementById('sqlModalBody');
 
@@ -964,6 +966,7 @@ async function init() {
   document.getElementById('refreshBtn').addEventListener('click', loadData);
   document.getElementById('dateRange').addEventListener('change', loadData);
   document.getElementById('sourceFilter').addEventListener('change', loadData);
+  document.getElementById('activeShopsOnly').addEventListener('change', loadData);
 
   if (authed) {
     loadData();

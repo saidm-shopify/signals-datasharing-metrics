@@ -32,7 +32,7 @@ function partnerIdsToSql(ids) {
   return ids.map(id => `'${id}'`).join(', ');
 }
 
-function buildQueries(days, selectedPartnerIds) {
+function buildQueries(days, selectedPartnerIds, activeShopsOnly = false) {
   const isAll = selectedPartnerIds.length === KNOWN_PARTNERS.length;
   const idList = partnerIdsToSql(selectedPartnerIds);
 
@@ -40,6 +40,21 @@ function buildQueries(days, selectedPartnerIds) {
   // Excludes today's partial data to avoid misleading daily rates
   const dateRange = `DATE(event_timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND DATE(event_timestamp) < CURRENT_DATE()`;
+
+  // Active shops subquery (opt-in for exec reporting accuracy)
+  const activeShopFilter = activeShopsOnly
+    ? `AND SAFE_CAST(payload.shop_id AS INT64) IN (
+          SELECT shop_id FROM \`shopify-dw.accounts_and_administration.shop_billing_info_current\`
+          WHERE is_active = TRUE
+        )`
+    : '';
+  // SP version uses payload.shop_id directly (already INT64 after UNNEST context)
+  const activeShopFilterSp = activeShopsOnly
+    ? `AND SAFE_CAST(payload.shop_id AS INT64) IN (
+          SELECT shop_id FROM \`shopify-dw.accounts_and_administration.shop_billing_info_current\`
+          WHERE is_active = TRUE
+        )`
+    : '';
 
   // WPM filter: restrict to selected partners
   const pFilterWpm = isAll ? '' : `AND payload.api_client_id IN (${idList})`;
@@ -56,6 +71,7 @@ function buildQueries(days, selectedPartnerIds) {
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_blocked_1\`
       WHERE ${dateRange}
         ${pFilterWpm}
+        ${activeShopFilter}
     `,
 
     // 2. SP totals (deduplicated by event_id, DATA_SHARING feature only)
@@ -69,6 +85,7 @@ function buildQueries(days, selectedPartnerIds) {
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
+        ${activeShopFilterSp}
     ` : `
       SELECT
         COUNT(DISTINCT payload.event_id) AS total_blocked_events,
@@ -77,6 +94,7 @@ function buildQueries(days, selectedPartnerIds) {
       WHERE ${dateRange}
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
+        ${activeShopFilterSp}
     `,
 
     // 3. WPM by partner
@@ -91,6 +109,7 @@ function buildQueries(days, selectedPartnerIds) {
         AND payload.api_client_id IS NOT NULL
         AND SAFE_CAST(payload.api_client_id AS INT64) IS NOT NULL
         ${pFilterWpm}
+        ${activeShopFilter}
       GROUP BY payload.api_client_id
       ORDER BY blocked_events DESC
     `,
@@ -106,6 +125,7 @@ function buildQueries(days, selectedPartnerIds) {
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
+        ${activeShopFilterSp}
       GROUP BY api_client_id
       ORDER BY blocked_events DESC
     `,
@@ -118,6 +138,7 @@ function buildQueries(days, selectedPartnerIds) {
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_blocked_1\`
       WHERE ${dateRange}
         ${pFilterWpm}
+        ${activeShopFilter}
       GROUP BY day
       ORDER BY day
     `,
@@ -133,6 +154,7 @@ function buildQueries(days, selectedPartnerIds) {
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
+        ${activeShopFilterSp}
       GROUP BY day
       ORDER BY day
     ` : `
@@ -143,6 +165,7 @@ function buildQueries(days, selectedPartnerIds) {
       WHERE ${dateRange}
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
+        ${activeShopFilterSp}
       GROUP BY day
       ORDER BY day
     `,
@@ -155,6 +178,7 @@ function buildQueries(days, selectedPartnerIds) {
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_blocked_1\`
       WHERE ${dateRange}
         ${pFilterWpm}
+        ${activeShopFilter}
       GROUP BY payload.event_name
       ORDER BY blocked_events DESC
       LIMIT 15
@@ -170,11 +194,13 @@ function buildQueries(days, selectedPartnerIds) {
       WHERE ${dateRange}
         AND payload.surface IN ('storefront-renderer', 'checkout-one', 'customer-account', 'shopify')
         ${pFilterWpm}
+        ${activeShopFilter}
       GROUP BY payload.surface
       ORDER BY blocked_events DESC
     `,
 
     // 9. WPM emitted events per partner (for % blocked calc)
+    // No active shop filter — emit table measures total partner event volume
     wpmEmittedByPartner: `
       SELECT
         payload.pixel_app_id AS api_client_id,
@@ -196,6 +222,7 @@ function buildQueries(days, selectedPartnerIds) {
         AND payload.api_client_id IS NOT NULL
         AND SAFE_CAST(payload.api_client_id AS INT64) IS NOT NULL
         AND payload.api_client_id IN (${idList})
+        ${activeShopFilter}
       GROUP BY payload.api_client_id
       ORDER BY blocked_events DESC
     `,
