@@ -233,8 +233,12 @@
 
   window.stopGame = function () {
     running = false;
-    if (animId) cancelAnimationFrame(animId);
-    animId = null;
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
     Object.keys(keys).forEach(k => { keys[k] = false; });
+    // Clear canvas to stop any visual artifacts
+    ctx.clearRect(0, 0, W, H);
   };
 })();

@@ -818,9 +818,9 @@ async function loadData(forceRefresh = false) {
   overlay.style.display = 'flex';
   refreshBtn.classList.add('loading');
   if (window.startGame) window.startGame();
-  const queries = buildQueries(days, partnerIds, activeShopsOnly);
 
   try {
+    const queries = buildQueries(days, partnerIds, activeShopsOnly);
     let msgIdx = 0;
     loadingText.textContent = LOADING_MESSAGES[0];
     loadingInterval = setInterval(() => {
