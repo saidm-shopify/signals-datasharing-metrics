@@ -777,25 +777,21 @@ async function loadData() {
   const queries = buildQueries(days, partnerIds, activeShopsOnly);
 
   try {
-    // Run queries in parallel batches to avoid overload
-    loadingText.textContent = 'Querying totals...';
-    const [wpmTotals, spTotalsRaw, wpmDailyTrend, spDailyTrend] = await Promise.all([
+    // Run all 11 queries in parallel for fastest load
+    loadingText.textContent = 'Querying BigQuery...';
+    const [
+      wpmTotals, spTotals, wpmDailyTrend, spDailyTrend,
+      wpmByPartner, spByPartner, wpmByEventName, wpmBySurface,
+      wpmEmittedByPartner, wpmBlockedByPartnerForPct, spDeliveredByPartner,
+    ] = await Promise.all([
       runQuery(queries.wpmTotals, 'wpmTotals'),
       runQuery(queries.spTotals, 'spTotals'),
       runQuery(queries.wpmDailyTrend, 'wpmDailyTrend'),
       runQuery(queries.spDailyTrend, 'spDailyTrend'),
-    ]);
-
-    loadingText.textContent = 'Querying partner breakdowns...';
-    const [wpmByPartner, spByPartner, wpmByEventName, wpmBySurface] = await Promise.all([
       runQuery(queries.wpmByPartner, 'wpmByPartner'),
       runQuery(queries.spByPartner, 'spByPartner'),
       runQuery(queries.wpmByEventName, 'wpmByEventName'),
       runQuery(queries.wpmBySurface, 'wpmBySurface'),
-    ]);
-
-    loadingText.textContent = 'Querying emit vs blocked...';
-    const [wpmEmittedByPartner, wpmBlockedByPartnerForPct, spDeliveredByPartner] = await Promise.all([
       runQuery(queries.wpmEmittedByPartner, 'wpmEmittedByPartner'),
       runQuery(queries.wpmBlockedByPartnerForPct, 'wpmBlockedByPartnerForPct'),
       runQuery(queries.spDeliveredByPartner, 'spDeliveredByPartner'),
@@ -803,7 +799,7 @@ async function loadData() {
 
     const allData = {
       wpmTotals,
-      spTotals: spTotalsRaw,
+      spTotals,
       wpmDailyTrend,
       spDailyTrend,
       wpmByPartner,
