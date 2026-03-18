@@ -18,16 +18,16 @@ let queryCache = { key: null, data: null };
 let loadingInterval = null;
 
 const LOADING_MESSAGES = [
-  'Querying BigQuery...',
-  'Crunching billions of events...',
-  'Asking BigQuery nicely...',
-  'Counting blocked pixels...',
-  'Scanning monorail tables...',
-  'Almost there, probably...',
-  'Faster than a Looker dashboard...',
-  'Herding data sharing events...',
-  'Deduplicated. Now counting...',
-  'Still faster than opening a spreadsheet...',
+  'Querying Data: Scanning BigQuery...',
+  'Querying Data: Crunching billions of events...',
+  'Querying Data: Asking BigQuery nicely...',
+  'Querying Data: Counting blocked pixels...',
+  'Querying Data: Scanning monorail tables...',
+  'Querying Data: Almost there, probably...',
+  'Querying Data: Faster than a Looker dashboard...',
+  'Querying Data: Herding data sharing events...',
+  'Querying Data: Deduplicating. Now counting...',
+  'Querying Data: Still faster than a spreadsheet...',
 ];
 
 // ─── Helpers ───

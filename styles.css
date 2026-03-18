@@ -538,8 +538,10 @@ body {
 }
 
 .game-loading {
-  color: var(--text-secondary);
-  font-style: italic;
+  color: #ffffff;
+  opacity: 0.5;
+  font-size: 12px;
+  margin-bottom: 2px;
 }
 
 /* ─── KPI Cards ─── */
