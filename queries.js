@@ -191,18 +191,18 @@ function buildQueries(days, selectedPartnerIds) {
       ORDER BY blocked_events DESC
     `,
 
-    // 11. SP allowed events per partner (for SP % blocked calc)
-    spAllowedByPartner: `
+    // 11. SP total delivered events per partner (for SP % blocked calc)
+    // Uses server_pixel_customer_events (batch table) — the actual SP event stream
+    spDeliveredByPartner: `
       SELECT
         api_client_id,
-        COUNT(DISTINCT payload.event_id) AS allowed_events
-      FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`,
-        UNNEST(payload.api_client_ids) AS api_client_id
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
-        AND payload.action = 'ALLOWED'
-        ${pFilterSp}
+        COUNT(DISTINCT event_id) AS delivered_events
+      FROM \`shopify-dw.buyer_activity.server_pixel_customer_events\`
+      WHERE is_success = TRUE
+        AND DATE(event_timestamp) >= DATE_SUB(CURRENT_DATE(), ${interval})
+        AND api_client_id IN (${idList})
       GROUP BY api_client_id
-      ORDER BY allowed_events DESC
+      ORDER BY delivered_events DESC
     `,
   };
 }

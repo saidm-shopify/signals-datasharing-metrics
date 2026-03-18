@@ -630,10 +630,10 @@ function renderPartnerTable(data) {
     emitMap[String(r.api_client_id)] = Number(r.emitted_events);
   });
 
-  // Build allowed lookup for SP % blocked
-  const spAllowedMap = {};
-  data.spAllowedByPartner.forEach(r => {
-    spAllowedMap[String(r.api_client_id)] = Number(r.allowed_events);
+  // Build delivered lookup for SP % blocked
+  const spDeliveredMap = {};
+  data.spDeliveredByPartner.forEach(r => {
+    spDeliveredMap[String(r.api_client_id)] = Number(r.delivered_events);
   });
 
   // Merge WPM + SP partner data by ID (not name) to keep ID for emit lookup
@@ -666,8 +666,8 @@ function renderPartnerTable(data) {
     const wpmCell = wpmPct !== null
       ? `${fmtFull(r.wpm)} <span class="pct-inline ${Number(wpmPct) > 50 ? 'pct-inline-warn' : ''}">(${wpmPct}%)</span>`
       : fmtFull(r.wpm);
-    const spAllowed = spAllowedMap[id] || 0;
-    const spTotal = spAllowed + r.sp;
+    const spDelivered = spDeliveredMap[id] || 0;
+    const spTotal = spDelivered + r.sp;
     const spPct = spTotal > 0 ? ((r.sp / spTotal) * 100).toFixed(1) : null;
     const spCell = spPct !== null
       ? `${fmtFull(r.sp)} <span class="pct-inline ${Number(spPct) > 50 ? 'pct-inline-warn' : ''}">(${spPct}%)</span>`
@@ -722,10 +722,10 @@ async function loadData() {
     ]);
 
     loadingText.textContent = 'Querying emit vs blocked...';
-    const [wpmEmittedByPartner, wpmBlockedByPartnerForPct, spAllowedByPartner] = await Promise.all([
+    const [wpmEmittedByPartner, wpmBlockedByPartnerForPct, spDeliveredByPartner] = await Promise.all([
       runQuery(queries.wpmEmittedByPartner, 'wpmEmittedByPartner'),
       runQuery(queries.wpmBlockedByPartnerForPct, 'wpmBlockedByPartnerForPct'),
-      runQuery(queries.spAllowedByPartner, 'spAllowedByPartner'),
+      runQuery(queries.spDeliveredByPartner, 'spDeliveredByPartner'),
     ]);
 
     const allData = {
@@ -739,7 +739,7 @@ async function loadData() {
       wpmBySurface,
       wpmEmittedByPartner,
       wpmBlockedByPartnerForPct,
-      spAllowedByPartner,
+      spDeliveredByPartner,
     };
 
     // Render everything
@@ -782,7 +782,7 @@ const QUERY_LABELS = {
   wpmBySurface: 'WPM: Blocked by Surface',
   wpmEmittedByPartner: 'WPM: Emitted Events per Partner',
   wpmBlockedByPartnerForPct: 'WPM: Blocked per Partner (for % calc)',
-  spAllowedByPartner: 'SP: Allowed Events per Partner (for % calc)',
+  spDeliveredByPartner: 'SP: Delivered Events per Partner (for % calc)',
 };
 
 function formatSql(sql) {
