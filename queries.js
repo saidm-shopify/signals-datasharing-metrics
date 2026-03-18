@@ -74,10 +74,11 @@ function buildQueries(days, selectedPartnerIds, activeShopsOnly = false) {
         ${activeShopFilter}
     `,
 
-    // 2. SP totals (deduplicated by event_id, DATA_SHARING feature only)
-    spTotals: !isAll ? `
+    // 2. SP totals (count per event_id + api_client_id pair, matching Chad's model)
+    // Always UNNEST so 1 event blocking 3 partners = 3 blocked event-partner pairs
+    spTotals: `
       SELECT
-        COUNT(DISTINCT payload.event_id) AS total_blocked_events,
+        COUNT(DISTINCT CONCAT(payload.event_id, ':', api_client_id)) AS total_blocked_events,
         COUNT(DISTINCT payload.shop_id) AS unique_shops
       FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`,
         UNNEST(payload.api_client_ids) AS api_client_id
@@ -85,15 +86,6 @@ function buildQueries(days, selectedPartnerIds, activeShopsOnly = false) {
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
-        ${activeShopFilterSp}
-    ` : `
-      SELECT
-        COUNT(DISTINCT payload.event_id) AS total_blocked_events,
-        COUNT(DISTINCT payload.shop_id) AS unique_shops
-      FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`
-      WHERE ${dateRange}
-        AND payload.action = 'BLOCKED'
-        AND payload.feature = 'DATA_SHARING'
         ${activeShopFilterSp}
     `,
 
@@ -143,28 +135,17 @@ function buildQueries(days, selectedPartnerIds, activeShopsOnly = false) {
       ORDER BY day
     `,
 
-    // 6. SP daily trend (deduplicated by event_id, DATA_SHARING only)
-    spDailyTrend: !isAll ? `
+    // 6. SP daily trend (count per event_id + api_client_id pair, matching Chad's model)
+    spDailyTrend: `
       SELECT
         DATE(event_timestamp) AS day,
-        COUNT(DISTINCT payload.event_id) AS blocked_events
+        COUNT(DISTINCT CONCAT(payload.event_id, ':', api_client_id)) AS blocked_events
       FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`,
         UNNEST(payload.api_client_ids) AS api_client_id
       WHERE ${dateRange}
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
-        ${activeShopFilterSp}
-      GROUP BY day
-      ORDER BY day
-    ` : `
-      SELECT
-        DATE(event_timestamp) AS day,
-        COUNT(DISTINCT payload.event_id) AS blocked_events
-      FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`
-      WHERE ${dateRange}
-        AND payload.action = 'BLOCKED'
-        AND payload.feature = 'DATA_SHARING'
         ${activeShopFilterSp}
       GROUP BY day
       ORDER BY day
