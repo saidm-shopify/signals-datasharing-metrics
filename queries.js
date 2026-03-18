@@ -9,7 +9,7 @@ const KNOWN_PARTNERS = [
   { id: '32196493313', name: 'HubSpot' },
   { id: '123074', name: 'Klaviyo' },
   { id: '2585307', name: 'Mailchimp' },
-  { id: '2997493', name: 'Microsoft Channel' },
+  { id: '2997493', name: 'Microsoft Bing' },
   { id: '186001', name: 'Omnisend' },
   { id: '3009811', name: 'Pinterest' },
   { id: '2328352', name: 'Postscript' },
