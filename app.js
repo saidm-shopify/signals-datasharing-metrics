@@ -621,47 +621,55 @@ function renderPctBlockedChart(data) {
 
 function renderPartnerTable(data) {
   const tbody = document.getElementById('partnerTableBody');
+  const days = parseInt(document.getElementById('dateRange').value);
+  const durationLabel = days === 1 ? 'Last 24h' : `Last ${days}d`;
 
-  // Merge WPM + SP partner data
+  // Build emitted lookup for WPM % blocked
+  const emitMap = {};
+  data.wpmEmittedByPartner.forEach(r => {
+    emitMap[String(r.api_client_id)] = Number(r.emitted_events);
+  });
+
+  // Merge WPM + SP partner data by ID (not name) to keep ID for emit lookup
   const merged = {};
   data.wpmByPartner.forEach(r => {
-    const name = partnerIdToName(r.api_client_id);
-    merged[name] = merged[name] || { wpm: 0, sp: 0, shops: 0, days: 0 };
-    merged[name].wpm = Number(r.blocked_events);
-    merged[name].shops = Number(r.unique_shops);
-    merged[name].days = Number(r.active_days);
+    const id = String(r.api_client_id);
+    merged[id] = merged[id] || { wpm: 0, sp: 0, shops: 0, days: 0 };
+    merged[id].wpm = Number(r.blocked_events);
+    merged[id].shops = Number(r.unique_shops);
+    merged[id].days = Number(r.active_days);
   });
   data.spByPartner.forEach(r => {
-    const name = partnerIdToName(r.api_client_id);
-    merged[name] = merged[name] || { wpm: 0, sp: 0, shops: 0, days: 0 };
-    merged[name].sp = Number(r.blocked_events);
+    const id = String(r.api_client_id);
+    merged[id] = merged[id] || { wpm: 0, sp: 0, shops: 0, days: 0 };
+    merged[id].sp = Number(r.blocked_events);
   });
 
-  const totalCombined = Object.values(merged).reduce((s, r) => s + r.wpm + r.sp, 0);
   const sorted = Object.entries(merged).sort((a, b) => (b[1].wpm + b[1].sp) - (a[1].wpm + a[1].sp));
 
   if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No data available</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No data available</td></tr>';
     return;
   }
 
-  tbody.innerHTML = sorted.map(([name, r]) => {
-    const combined = r.wpm + r.sp;
-    const pctVal = totalCombined ? ((combined / totalCombined) * 100).toFixed(1) : 0;
+  tbody.innerHTML = sorted.map(([id, r]) => {
+    const name = partnerIdToName(id);
+    const emitted = emitMap[id] || 0;
+    const wpmTotal = emitted + r.wpm;
+    const wpmPct = wpmTotal > 0 ? ((r.wpm / wpmTotal) * 100).toFixed(1) : '—';
     return `
       <tr>
         <td><strong>${name}</strong></td>
         <td class="num">${fmtFull(r.wpm)}</td>
-        <td class="num">${fmtFull(r.sp)}</td>
-        <td class="num"><strong>${fmtFull(combined)}</strong></td>
-        <td class="num">${fmtFull(r.shops)}</td>
-        <td class="num">${r.days}</td>
         <td>
           <div class="pct-bar-cell">
-            <div class="pct-bar-track"><div class="pct-bar-fill" style="width:${pctVal}%"></div></div>
-            <span class="pct-bar-label">${pctVal}%</span>
+            <div class="pct-bar-track"><div class="pct-bar-fill ${wpmPct !== '—' && Number(wpmPct) > 50 ? 'pct-bar-fill-warn' : ''}" style="width:${wpmPct === '—' ? 0 : wpmPct}%"></div></div>
+            <span class="pct-bar-label">${wpmPct === '—' ? '—' : wpmPct + '%'}</span>
           </div>
         </td>
+        <td class="num">${fmtFull(r.sp)}</td>
+        <td class="num">${fmtFull(r.shops)}</td>
+        <td class="num">${durationLabel}</td>
       </tr>
     `;
   }).join('');

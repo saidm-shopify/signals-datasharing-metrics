@@ -676,6 +676,10 @@ td.num {
   transition: width 0.6s ease;
 }
 
+.pct-bar-fill-warn {
+  background: var(--red);
+}
+
 .pct-bar-label {
   font-size: 12px;
   color: var(--text-secondary);
