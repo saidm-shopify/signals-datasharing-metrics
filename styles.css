@@ -539,17 +539,22 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   transition: all 0.2s ease;
 }
 
-.game-partner-chip:hover {
-  background: rgba(255, 255, 255, 0.12);
+.game-partner-chip svg {
+  width: 18px;
+  height: 18px;
 }
+
+.game-partner-chip:nth-child(1) { background: #1d4ed8; }
+.game-partner-chip:nth-child(2) { background: #0e7490; }
+.game-partner-chip:nth-child(3) { background: #E60023; }
+.game-partner-chip:nth-child(4) { background: #c2a200; }
+.game-partner-chip:nth-child(5) { background: #0369a1; }
 
 .game-footer {
   display: flex;
