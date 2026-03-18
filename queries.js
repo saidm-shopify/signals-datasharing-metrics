@@ -200,13 +200,14 @@ function buildQueries(days, selectedPartnerIds, activeShopsOnly = false) {
     `,
 
     // 9. WPM emitted events per partner (for % blocked calc)
-    // No active shop filter — emit table measures total partner event volume
+    // Matches Chad's web_events CTE: SUCCESS only, deduplicated by event_id
     wpmEmittedByPartner: `
       SELECT
         payload.pixel_app_id AS api_client_id,
-        COUNT(*) AS emitted_events
+        COUNT(DISTINCT payload.event_id) AS emitted_events
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_emit_4\`
       WHERE ${dateRange}
+        AND payload.status = 'SUCCESS'
         AND payload.pixel_app_id IN (${idList})
       GROUP BY payload.pixel_app_id
       ORDER BY emitted_events DESC
