@@ -1,5 +1,6 @@
 // ─── Data Sharing Optimizer ───
 // Plays during loading. Intercept red data packets before they leak to partners.
+// v2
 
 (function () {
   const canvas = document.getElementById('gameCanvas');
