@@ -38,14 +38,12 @@
   const castle = { x: 10, y: H / 2 - 40, w: 50, h: 80 };
 
   function spawnBeam() {
-    const isRed = Math.random() < 0.45;
     beams.push({
       x: castle.x + castle.w + 10,
       y: margin + Math.random() * (H - margin * 2),
       speed: 1.5 + Math.random() * 2.5,
       w: 28 + Math.random() * 20,
       h: 4,
-      red: isRed,
     });
   }
 
@@ -86,25 +84,17 @@
       const shieldBot = shieldY + shieldH / 2;
       if (b.x + b.w >= shieldX && b.x <= shieldX + shieldW &&
           b.y + b.h >= shieldTop && b.y <= shieldBot) {
-        if (b.red) {
-          score++;
-          spawnParticles(shieldX, b.y, '#ef4444');
-          spawnFloatingText(shieldX + 16, b.y, '+1', '#ef4444');
-        } else {
-          score = Math.max(0, score - 1);
-          spawnParticles(shieldX, b.y, '#22c55e');
-          spawnFloatingText(shieldX + 16, b.y, '-1', '#22c55e');
-        }
+        score++;
+        spawnParticles(shieldX, b.y, '#ef4444');
+        spawnFloatingText(shieldX + 16, b.y, '+1', '#22c55e');
         beams.splice(i, 1);
         continue;
       }
 
-      // Off screen
+      // Off screen — leaked through
       if (b.x > W + 10) {
-        if (b.red) {
-          score = Math.max(0, score - 1);
-          spawnFloatingText(W - 40, b.y, '-1', '#ef444488');
-        }
+        score = Math.max(0, score - 1);
+        spawnFloatingText(W - 40, b.y, '-1', '#ef4444');
         beams.splice(i, 1);
       }
     }
@@ -154,7 +144,7 @@
     ctx.fillStyle = '#6366f1';
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Store', castle.x + castle.w / 2, castle.y + castle.h / 2 + 4);
+    ctx.fillText('Shop', castle.x + castle.w / 2, castle.y + castle.h / 2 + 4);
 
     // Partner zone label
     ctx.fillStyle = 'rgba(136, 136, 160, 0.3)';
@@ -162,25 +152,11 @@
     ctx.textAlign = 'center';
     ctx.fillText('Partners', W - 30, 16);
 
-    // Legend
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(W - 120, H - 28, 8, 8);
-    ctx.fillStyle = 'rgba(136, 136, 160, 0.5)';
-    ctx.fillText('Block these', W - 108, H - 20);
-    ctx.fillStyle = '#22c55e';
-    ctx.fillRect(W - 120, H - 14, 8, 8);
-    ctx.fillStyle = 'rgba(136, 136, 160, 0.5)';
-    ctx.fillText('Let these pass', W - 108, H - 6);
-
-    // Beams
+    // Beams (all red)
     beams.forEach(b => {
-      const color = b.red ? '#ef4444' : '#22c55e';
-      const glow = b.red ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)';
-      ctx.shadowColor = glow;
+      ctx.shadowColor = 'rgba(239,68,68,0.3)';
       ctx.shadowBlur = 8;
-      ctx.fillStyle = color;
+      ctx.fillStyle = '#ef4444';
       ctx.beginPath();
       ctx.roundRect(b.x, b.y, b.w, b.h, 2);
       ctx.fill();
