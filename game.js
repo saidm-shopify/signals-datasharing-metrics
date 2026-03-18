@@ -38,9 +38,6 @@
   // Castle (store) on the left
   const castle = { x: 10, y: H / 2 - 40, w: 50, h: 80 };
 
-  // Partner zone width (matches HTML strip on the right)
-  const partnerZoneW = 0; // Partners are now HTML elements outside canvas
-
   function spawnBeam() {
     beams.push({
       x: castle.x + castle.w + 10,
