@@ -8,16 +8,31 @@
   const W = canvas.width;
   const H = canvas.height;
 
+  // roundRect polyfill for older browsers
+  if (!ctx.roundRect) {
+    ctx.roundRect = function (x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      this.moveTo(x + r, y);
+      this.arcTo(x + w, y, x + w, y + h, r);
+      this.arcTo(x + w, y + h, x, y + h, r);
+      this.arcTo(x, y + h, x, y, r);
+      this.arcTo(x, y, x + w, y, r);
+      this.closePath();
+    };
+  }
+
   let running = false;
   let animId = null;
   let score = 0;
   let beams = [];
   let particles = [];
+  let floatingTexts = [];
   let shieldY = H / 2;
   const shieldH = 60;
   const shieldW = 8;
   const shieldX = W * 0.72;
   const keys = {};
+  const margin = 20;
 
   // Castle (store) on the left
   const castle = { x: 10, y: H / 2 - 40, w: 50, h: 80 };
@@ -26,12 +41,11 @@
     const isRed = Math.random() < 0.45;
     beams.push({
       x: castle.x + castle.w + 10,
-      y: castle.y + 10 + Math.random() * (castle.h - 20),
+      y: margin + Math.random() * (H - margin * 2),
       speed: 1.5 + Math.random() * 2.5,
       w: 28 + Math.random() * 20,
       h: 4,
       red: isRed,
-      alpha: 1,
     });
   }
 
@@ -48,15 +62,19 @@
     }
   }
 
+  function spawnFloatingText(x, y, text, color) {
+    floatingTexts.push({ x, y, text, color, life: 1 });
+  }
+
   function update() {
     // Shield movement
-    const moveSpeed = 4;
+    const moveSpeed = 4.5;
     if (keys['ArrowUp'] || keys['w'] || keys['W']) shieldY -= moveSpeed;
     if (keys['ArrowDown'] || keys['s'] || keys['S']) shieldY += moveSpeed;
     shieldY = Math.max(shieldH / 2, Math.min(H - shieldH / 2, shieldY));
 
-    // Spawn beams
-    if (Math.random() < 0.04) spawnBeam();
+    // Spawn beams (~4-5 per second at 60fps)
+    if (Math.random() < 0.07) spawnBeam();
 
     // Update beams
     for (let i = beams.length - 1; i >= 0; i--) {
@@ -71,9 +89,11 @@
         if (b.red) {
           score++;
           spawnParticles(shieldX, b.y, '#ef4444');
+          spawnFloatingText(shieldX + 16, b.y, '+1', '#ef4444');
         } else {
           score = Math.max(0, score - 1);
           spawnParticles(shieldX, b.y, '#22c55e');
+          spawnFloatingText(shieldX + 16, b.y, '-1', '#22c55e');
         }
         beams.splice(i, 1);
         continue;
@@ -81,7 +101,10 @@
 
       // Off screen
       if (b.x > W + 10) {
-        if (b.red) score = Math.max(0, score - 1);
+        if (b.red) {
+          score = Math.max(0, score - 1);
+          spawnFloatingText(W - 40, b.y, '-1', '#ef444488');
+        }
         beams.splice(i, 1);
       }
     }
@@ -93,6 +116,14 @@
       p.y += p.vy;
       p.life -= 0.03;
       if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    // Update floating texts
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+      const t = floatingTexts[i];
+      t.y -= 1;
+      t.life -= 0.025;
+      if (t.life <= 0) floatingTexts.splice(i, 1);
     }
 
     document.getElementById('gameScore').textContent = `Score: ${score}`;
@@ -119,17 +150,29 @@
     ctx.roundRect(castle.x, castle.y, castle.w, castle.h, 6);
     ctx.fill();
     ctx.stroke();
-    // Store icon (bag)
+    // Store label
     ctx.fillStyle = '#6366f1';
-    ctx.font = '22px sans-serif';
+    ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('\uD83D\uDECD\uFE0F', castle.x + castle.w / 2, castle.y + castle.h / 2 + 8);
+    ctx.fillText('Store', castle.x + castle.w / 2, castle.y + castle.h / 2 + 4);
 
     // Partner zone label
     ctx.fillStyle = 'rgba(136, 136, 160, 0.3)';
     ctx.font = '11px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Partners', W - 30, 16);
+
+    // Legend
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(W - 120, H - 28, 8, 8);
+    ctx.fillStyle = 'rgba(136, 136, 160, 0.5)';
+    ctx.fillText('Block these', W - 108, H - 20);
+    ctx.fillStyle = '#22c55e';
+    ctx.fillRect(W - 120, H - 14, 8, 8);
+    ctx.fillStyle = 'rgba(136, 136, 160, 0.5)';
+    ctx.fillText('Let these pass', W - 108, H - 6);
 
     // Beams
     beams.forEach(b => {
@@ -174,6 +217,16 @@
       ctx.fill();
     });
     ctx.globalAlpha = 1;
+
+    // Floating score texts
+    floatingTexts.forEach(t => {
+      ctx.globalAlpha = t.life;
+      ctx.fillStyle = t.color;
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(t.text, t.x, t.y);
+    });
+    ctx.globalAlpha = 1;
   }
 
   function loop() {
@@ -183,19 +236,23 @@
     animId = requestAnimationFrame(loop);
   }
 
-  // Keyboard
+  // Keyboard — only preventDefault when game is running
   document.addEventListener('keydown', e => {
     keys[e.key] = true;
-    if (['ArrowUp', 'ArrowDown'].includes(e.key)) e.preventDefault();
+    if (running && ['ArrowUp', 'ArrowDown'].includes(e.key)) e.preventDefault();
   });
   document.addEventListener('keyup', e => { keys[e.key] = false; });
 
   // Public API — called by app.js
   window.startGame = function () {
+    // Stop any existing loop first
+    if (animId) cancelAnimationFrame(animId);
     score = 0;
     beams = [];
     particles = [];
+    floatingTexts = [];
     shieldY = H / 2;
+    Object.keys(keys).forEach(k => { keys[k] = false; });
     running = true;
     loop();
   };
@@ -203,5 +260,7 @@
   window.stopGame = function () {
     running = false;
     if (animId) cancelAnimationFrame(animId);
+    animId = null;
+    Object.keys(keys).forEach(k => { keys[k] = false; });
   };
 })();
