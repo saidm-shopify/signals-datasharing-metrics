@@ -692,7 +692,7 @@ function renderPctBlockedChart(data) {
 function renderPartnerTable(data) {
   const tbody = document.getElementById('partnerTableBody');
   const days = parseInt(document.getElementById('dateRange').value);
-  const durationLabel = days === 1 ? 'Last 24h' : `Last ${days}d`;
+  const durationLabel = days === 1 ? 'Yesterday' : `Last ${days}d`;
 
   // Build emitted lookup for WPM % blocked
   const emitMap = {};

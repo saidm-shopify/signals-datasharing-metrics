@@ -1,5 +1,5 @@
 // ─── Query Builder ───
-// All queries are parameterized by date range (days) and optional partner filter
+// All queries use complete calendar days (excludes current partial day)
 
 const KNOWN_PARTNERS = [
   { id: '3977633', name: 'Attentive' },
@@ -33,13 +33,17 @@ function partnerIdsToSql(ids) {
 }
 
 function buildQueries(days, selectedPartnerIds) {
-  const interval = `INTERVAL ${days} DAY`;
   const isAll = selectedPartnerIds.length === KNOWN_PARTNERS.length;
   const idList = partnerIdsToSql(selectedPartnerIds);
 
-  // WPM filter: always filter to selected partners
+  // Complete calendar days: e.g. days=1 → yesterday only, days=7 → last 7 full days
+  // Excludes today's partial data to avoid misleading daily rates
+  const dateRange = `DATE(event_timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+        AND DATE(event_timestamp) < CURRENT_DATE()`;
+
+  // WPM filter: restrict to selected partners
   const pFilterWpm = isAll ? '' : `AND payload.api_client_id IN (${idList})`;
-  // SP filter: always filter to selected partners (after UNNEST)
+  // SP filter: restrict to selected partners (after UNNEST)
   const pFilterSp = isAll ? '' : `AND api_client_id IN (${idList})`;
 
   return {
@@ -50,7 +54,7 @@ function buildQueries(days, selectedPartnerIds) {
         COUNT(DISTINCT payload.shop_id) AS unique_shops,
         COUNT(DISTINCT payload.api_client_id) AS unique_api_clients
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_blocked_1\`
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         ${pFilterWpm}
     `,
 
@@ -61,7 +65,7 @@ function buildQueries(days, selectedPartnerIds) {
         COUNT(DISTINCT payload.shop_id) AS unique_shops
       FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`,
         UNNEST(payload.api_client_ids) AS api_client_id
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
@@ -70,7 +74,7 @@ function buildQueries(days, selectedPartnerIds) {
         COUNT(DISTINCT payload.event_id) AS total_blocked_events,
         COUNT(DISTINCT payload.shop_id) AS unique_shops
       FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
     `,
@@ -83,7 +87,7 @@ function buildQueries(days, selectedPartnerIds) {
         COUNT(DISTINCT payload.shop_id) AS unique_shops,
         COUNT(DISTINCT DATE(event_timestamp)) AS active_days
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_blocked_1\`
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         AND payload.api_client_id IS NOT NULL
         AND SAFE_CAST(payload.api_client_id AS INT64) IS NOT NULL
         ${pFilterWpm}
@@ -98,7 +102,7 @@ function buildQueries(days, selectedPartnerIds) {
         COUNT(DISTINCT payload.event_id) AS blocked_events
       FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`,
         UNNEST(payload.api_client_ids) AS api_client_id
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
@@ -112,7 +116,7 @@ function buildQueries(days, selectedPartnerIds) {
         DATE(event_timestamp) AS day,
         COUNT(*) AS blocked_events
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_blocked_1\`
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         ${pFilterWpm}
       GROUP BY day
       ORDER BY day
@@ -125,7 +129,7 @@ function buildQueries(days, selectedPartnerIds) {
         COUNT(DISTINCT payload.event_id) AS blocked_events
       FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`,
         UNNEST(payload.api_client_ids) AS api_client_id
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
         ${pFilterSp}
@@ -136,7 +140,7 @@ function buildQueries(days, selectedPartnerIds) {
         DATE(event_timestamp) AS day,
         COUNT(DISTINCT payload.event_id) AS blocked_events
       FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         AND payload.action = 'BLOCKED'
         AND payload.feature = 'DATA_SHARING'
       GROUP BY day
@@ -149,7 +153,7 @@ function buildQueries(days, selectedPartnerIds) {
         payload.event_name,
         COUNT(*) AS blocked_events
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_blocked_1\`
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         ${pFilterWpm}
       GROUP BY payload.event_name
       ORDER BY blocked_events DESC
@@ -163,7 +167,7 @@ function buildQueries(days, selectedPartnerIds) {
         COUNT(*) AS blocked_events,
         COUNT(DISTINCT payload.shop_id) AS unique_shops
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_blocked_1\`
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         AND payload.surface IN ('storefront-renderer', 'checkout-one', 'customer-account', 'shopify')
         ${pFilterWpm}
       GROUP BY payload.surface
@@ -176,7 +180,7 @@ function buildQueries(days, selectedPartnerIds) {
         payload.pixel_app_id AS api_client_id,
         COUNT(*) AS emitted_events
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_emit_4\`
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         AND payload.pixel_app_id IN (${idList})
       GROUP BY payload.pixel_app_id
       ORDER BY emitted_events DESC
@@ -188,7 +192,7 @@ function buildQueries(days, selectedPartnerIds) {
         payload.api_client_id,
         COUNT(*) AS blocked_events
       FROM \`sdp-ingest.monorail.monorail_web_pixels_manager_subscriber_event_blocked_1\`
-      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+      WHERE ${dateRange}
         AND payload.api_client_id IS NOT NULL
         AND SAFE_CAST(payload.api_client_id AS INT64) IS NOT NULL
         AND payload.api_client_id IN (${idList})
@@ -197,7 +201,7 @@ function buildQueries(days, selectedPartnerIds) {
     `,
 
     // 11. SP total delivered events per partner (for SP % blocked calc)
-    // Uses server_pixel_customer_events (batch table) — the actual SP event stream
+    // Uses server_pixel_customer_events (batch table, partitioned by DATE)
     // api_client_id is INT64 here, so use unquoted IDs; CAST to STRING for JS matching
     spDeliveredByPartner: `
       SELECT
@@ -205,7 +209,8 @@ function buildQueries(days, selectedPartnerIds) {
         COUNT(DISTINCT event_id) AS delivered_events
       FROM \`shopify-dw.buyer_activity.server_pixel_customer_events\`
       WHERE is_success = TRUE
-        AND DATE(event_timestamp) >= DATE_SUB(CURRENT_DATE(), ${interval})
+        AND DATE(event_timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+        AND DATE(event_timestamp) < CURRENT_DATE()
         AND api_client_id IN (${selectedPartnerIds.join(', ')})
       GROUP BY 1
       ORDER BY delivered_events DESC
