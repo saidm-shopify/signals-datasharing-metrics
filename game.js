@@ -37,22 +37,22 @@
   // Castle (store) on the left
   const castle = { x: 10, y: H / 2 - 40, w: 50, h: 80 };
 
-  // Partner logos in the right zone
-  const partnerLogos = [
-    { name: 'TikTok', src: 'https://cdn.brandfetch.io/tiktok.com/w/128/h/128/icon' },
-    { name: 'Snapchat', src: 'https://cdn.brandfetch.io/snapchat.com/w/128/h/128/icon' },
-    { name: 'X', src: 'https://cdn.brandfetch.io/x.com/w/128/h/128/icon' },
-    { name: 'Pinterest', src: 'https://cdn.brandfetch.io/pinterest.com/w/128/h/128/icon' },
-    { name: 'Bing', src: 'https://cdn.brandfetch.io/bing.com/w/128/h/128/icon' },
+  // Partner SVG icons rendered to images
+  const partnerSvgs = [
+    { name: 'X', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>' },
+    { name: 'TikTok', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.87a8.28 8.28 0 004.77 1.52V6.93a4.84 4.84 0 01-1-.24z"/></svg>' },
+    { name: 'Pinterest', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#E60023"><path d="M12 0a12 12 0 00-4.37 23.17c-.1-.94-.2-2.4.04-3.44l1.43-6.09s-.36-.73-.36-1.81c0-1.7.98-2.96 2.21-2.96 1.04 0 1.54.78 1.54 1.72 0 1.05-.67 2.62-1.01 4.07-.29 1.21.61 2.2 1.8 2.2 2.16 0 3.82-2.28 3.82-5.57 0-2.91-2.09-4.95-5.08-4.95-3.46 0-5.49 2.6-5.49 5.28 0 1.05.4 2.17.91 2.78.1.12.11.23.08.35l-.34 1.36c-.05.22-.18.27-.41.16-1.53-.71-2.48-2.96-2.48-4.76 0-3.87 2.81-7.43 8.12-7.43 4.26 0 7.58 3.04 7.58 7.1 0 4.24-2.67 7.65-6.39 7.65-1.25 0-2.42-.65-2.82-1.41l-.77 2.93c-.28 1.07-1.04 2.41-1.54 3.23A12 12 0 1012 0z"/></svg>' },
+    { name: 'Snap', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFC00"><path d="M12.21 1.5c2.75.03 4.97 1.29 6.18 3.53.62 1.15.8 2.41.8 3.7-.02 1.1-.14 2.2-.26 3.29-.02.14 0 .22.14.28.5.23 1.01.45 1.48.74.4.24.58.62.48 1.01-.1.41-.44.64-.87.67-.3.02-.6-.02-.89-.1-.3-.07-.58-.18-.87-.27-.12-.04-.23-.03-.33.05-.62.49-1.31.86-2.11 1.03-.63.13-1.24.3-1.79.65-.72.46-1.48.84-2.37.9-.04 0-.08.02-.12.02h-.34c-.9-.06-1.66-.44-2.38-.9-.55-.35-1.16-.52-1.79-.65-.8-.17-1.49-.54-2.11-1.03-.1-.08-.21-.09-.33-.05-.29.09-.57.2-.87.27-.29.08-.59.12-.89.1-.43-.03-.77-.26-.87-.67-.1-.39.08-.77.48-1.01.47-.29.98-.51 1.48-.74.14-.06.16-.14.14-.28-.12-1.09-.24-2.19-.26-3.29 0-1.29.18-2.55.8-3.7C7.02 2.79 9.24 1.53 11.99 1.5h.22z"/></svg>' },
+    { name: 'Bing', svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 3v16.5l4.06 2.3 8.44-3.06V14.5l-4.7-1.7L5 3zm4.06 5.05l3.07 6.55 3.37 1.22-3.37 1.25-3.07-1.72V8.05z" fill="#00a4ef"/></svg>' },
   ];
   const logoImages = [];
   let badgePositions = [];
 
-  // Preload logo images
-  partnerLogos.forEach(p => {
+  // Convert SVGs to Image objects
+  partnerSvgs.forEach(p => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = p.src;
+    const blob = new Blob([p.svg], { type: 'image/svg+xml' });
+    img.src = URL.createObjectURL(blob);
     logoImages.push({ img, name: p.name });
   });
 
@@ -188,24 +188,12 @@
     ctx.lineTo(pzoneX, H);
     ctx.stroke();
     // Partner logos
-    const logoSize = 20;
+    const logoSize = 22;
     logoImages.forEach((l, i) => {
       const pos = badgePositions[i];
       if (!pos) return;
-      ctx.globalAlpha = 0.6;
-      if (l.img.complete && l.img.naturalWidth > 0) {
-        ctx.drawImage(l.img, pos.x, pos.y, logoSize, logoSize);
-      } else {
-        // Fallback: first letter circle
-        ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
-        ctx.beginPath();
-        ctx.arc(pos.x + logoSize / 2, pos.y + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(l.name[0], pos.x + logoSize / 2, pos.y + logoSize / 2 + 4);
-      }
+      ctx.globalAlpha = 0.7;
+      ctx.drawImage(l.img, pos.x, pos.y, logoSize, logoSize);
       ctx.globalAlpha = 1;
     });
 
