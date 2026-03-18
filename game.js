@@ -1,5 +1,5 @@
-// ─── Data Shield Mini-Game ───
-// Plays during loading. Block red beams (bad data), let green (good data) pass.
+// ─── Data Sharing Optimizer ───
+// Plays during loading. Intercept red data packets before they leak to partners.
 
 (function () {
   const canvas = document.getElementById('gameCanvas');
