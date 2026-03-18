@@ -648,7 +648,7 @@ function renderPartnerTable(data) {
   const sorted = Object.entries(merged).sort((a, b) => (b[1].wpm + b[1].sp) - (a[1].wpm + a[1].sp));
 
   if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No data available</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No data available</td></tr>';
     return;
   }
 
@@ -656,18 +656,16 @@ function renderPartnerTable(data) {
     const name = partnerIdToName(id);
     const emitted = emitMap[id] || 0;
     const wpmTotal = emitted + r.wpm;
-    const wpmPct = wpmTotal > 0 ? ((r.wpm / wpmTotal) * 100).toFixed(1) : '—';
+    const wpmPct = wpmTotal > 0 ? ((r.wpm / wpmTotal) * 100).toFixed(1) : null;
+    const wpmCell = wpmPct !== null
+      ? `${fmtFull(r.wpm)} <span class="pct-inline ${Number(wpmPct) > 50 ? 'pct-inline-warn' : ''}">(${wpmPct}%)</span>`
+      : fmtFull(r.wpm);
+    const spCell = fmtFull(r.sp);
     return `
       <tr>
         <td><strong>${name}</strong></td>
-        <td class="num">${fmtFull(r.wpm)}</td>
-        <td>
-          <div class="pct-bar-cell">
-            <div class="pct-bar-track"><div class="pct-bar-fill ${wpmPct !== '—' && Number(wpmPct) > 50 ? 'pct-bar-fill-warn' : ''}" style="width:${wpmPct === '—' ? 0 : wpmPct}%"></div></div>
-            <span class="pct-bar-label">${wpmPct === '—' ? '—' : wpmPct + '%'}</span>
-          </div>
-        </td>
-        <td class="num">${fmtFull(r.sp)}</td>
+        <td class="num">${wpmCell}</td>
+        <td class="num">${spCell}</td>
         <td class="num">${fmtFull(r.shops)}</td>
         <td class="num">${durationLabel}</td>
       </tr>
