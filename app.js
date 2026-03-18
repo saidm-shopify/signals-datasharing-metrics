@@ -846,7 +846,6 @@ async function loadData() {
 const QUERY_LABELS = {
   wpmTotals: 'WPM: Total Blocked Events',
   spTotals: 'SP: Total Blocked Events',
-  spTotalsFiltered: 'SP: Total Blocked Events (Filtered)',
   wpmByPartner: 'WPM: Blocked by Partner',
   spByPartner: 'SP: Blocked by Partner',
   wpmDailyTrend: 'WPM: Daily Trend',
