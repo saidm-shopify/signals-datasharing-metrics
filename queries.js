@@ -190,5 +190,19 @@ function buildQueries(days, selectedPartnerIds) {
       GROUP BY payload.api_client_id
       ORDER BY blocked_events DESC
     `,
+
+    // 11. SP allowed events per partner (for SP % blocked calc)
+    spAllowedByPartner: `
+      SELECT
+        api_client_id,
+        COUNT(DISTINCT payload.event_id) AS allowed_events
+      FROM \`sdp-ingest.monorail.monorail_server_pixel_data_sharing_observability_1\`,
+        UNNEST(payload.api_client_ids) AS api_client_id
+      WHERE event_timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), ${interval})
+        AND payload.action = 'ALLOWED'
+        ${pFilterSp}
+      GROUP BY api_client_id
+      ORDER BY allowed_events DESC
+    `,
   };
 }

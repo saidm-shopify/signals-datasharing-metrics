@@ -630,6 +630,12 @@ function renderPartnerTable(data) {
     emitMap[String(r.api_client_id)] = Number(r.emitted_events);
   });
 
+  // Build allowed lookup for SP % blocked
+  const spAllowedMap = {};
+  data.spAllowedByPartner.forEach(r => {
+    spAllowedMap[String(r.api_client_id)] = Number(r.allowed_events);
+  });
+
   // Merge WPM + SP partner data by ID (not name) to keep ID for emit lookup
   const merged = {};
   data.wpmByPartner.forEach(r => {
@@ -660,7 +666,12 @@ function renderPartnerTable(data) {
     const wpmCell = wpmPct !== null
       ? `${fmtFull(r.wpm)} <span class="pct-inline ${Number(wpmPct) > 50 ? 'pct-inline-warn' : ''}">(${wpmPct}%)</span>`
       : fmtFull(r.wpm);
-    const spCell = fmtFull(r.sp);
+    const spAllowed = spAllowedMap[id] || 0;
+    const spTotal = spAllowed + r.sp;
+    const spPct = spTotal > 0 ? ((r.sp / spTotal) * 100).toFixed(1) : null;
+    const spCell = spPct !== null
+      ? `${fmtFull(r.sp)} <span class="pct-inline ${Number(spPct) > 50 ? 'pct-inline-warn' : ''}">(${spPct}%)</span>`
+      : fmtFull(r.sp);
     return `
       <tr>
         <td><strong>${name}</strong></td>
@@ -711,9 +722,10 @@ async function loadData() {
     ]);
 
     loadingText.textContent = 'Querying emit vs blocked...';
-    const [wpmEmittedByPartner, wpmBlockedByPartnerForPct] = await Promise.all([
+    const [wpmEmittedByPartner, wpmBlockedByPartnerForPct, spAllowedByPartner] = await Promise.all([
       runQuery(queries.wpmEmittedByPartner, 'wpmEmittedByPartner'),
       runQuery(queries.wpmBlockedByPartnerForPct, 'wpmBlockedByPartnerForPct'),
+      runQuery(queries.spAllowedByPartner, 'spAllowedByPartner'),
     ]);
 
     const allData = {
@@ -727,6 +739,7 @@ async function loadData() {
       wpmBySurface,
       wpmEmittedByPartner,
       wpmBlockedByPartnerForPct,
+      spAllowedByPartner,
     };
 
     // Render everything
@@ -769,6 +782,7 @@ const QUERY_LABELS = {
   wpmBySurface: 'WPM: Blocked by Surface',
   wpmEmittedByPartner: 'WPM: Emitted Events per Partner',
   wpmBlockedByPartnerForPct: 'WPM: Blocked per Partner (for % calc)',
+  spAllowedByPartner: 'SP: Allowed Events per Partner (for % calc)',
 };
 
 function formatSql(sql) {
