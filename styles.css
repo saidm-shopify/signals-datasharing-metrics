@@ -512,10 +512,43 @@ body {
   opacity: 0.6;
 }
 
+.game-canvas-wrapper {
+  position: relative;
+  display: flex;
+}
+
 #gameCanvas {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
   border: 1px solid var(--border);
+  border-right: none;
   background: var(--bg-primary);
+}
+
+.game-partners-strip {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 12px 8px;
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid var(--border);
+  border-left: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.game-partner-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+
+.game-partner-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .game-footer {

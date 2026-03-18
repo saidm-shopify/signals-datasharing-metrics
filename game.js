@@ -38,15 +38,8 @@
   // Castle (store) on the left
   const castle = { x: 10, y: H / 2 - 40, w: 50, h: 80 };
 
-  // Partner labels with vibrant colors (drawn directly on canvas)
-  const partners = [
-    { label: 'X', color: '#60a5fa' },
-    { label: 'TT', color: '#22d3ee' },
-    { label: 'Pi', color: '#ef4444' },
-    { label: 'Sn', color: '#facc15' },
-    { label: 'Bi', color: '#38bdf8' },
-  ];
-  let badgePositions = [];
+  // Partner zone width (matches HTML strip on the right)
+  const partnerZoneW = 0; // Partners are now HTML elements outside canvas
 
   function spawnBeam() {
     beams.push({
@@ -157,43 +150,7 @@
     ctx.textAlign = 'center';
     ctx.fillText('Shop', castle.x + castle.w / 2, castle.y + castle.h / 2 + 4);
 
-    // Partner zone (right edge)
-    const pzoneW = 50;
-    const pzoneX = W - pzoneW;
-    ctx.fillStyle = 'rgba(99, 102, 241, 0.06)';
-    ctx.fillRect(pzoneX, 0, pzoneW, H);
-    ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(pzoneX, 0);
-    ctx.lineTo(pzoneX, H);
-    ctx.stroke();
-    // Partner badges (vibrant colored circles with initials)
-    const badgeR = 14;
-    partners.forEach((p, i) => {
-      const pos = badgePositions[i];
-      if (!pos) return;
-      // Glowing circle
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = 0.15;
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, badgeR + 4, 0, Math.PI * 2);
-      ctx.fill();
-      // Solid circle
-      ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, badgeR, 0, Math.PI * 2);
-      ctx.fill();
-      // Label
-      ctx.fillStyle = '#0a0a0f';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(p.label, pos.x, pos.y + 4);
-    });
+    // Partner zone is now HTML (outside canvas)
 
     // Beams (all red)
     beams.forEach(b => {
@@ -263,21 +220,8 @@
   document.addEventListener('keyup', e => { keys[e.key] = false; });
 
   // Public API — called by app.js
-  function generateBadgePositions() {
-    const pzoneW = 50;
-    const pzoneX = W - pzoneW;
-    const count = partners.length;
-    const spacing = H / (count + 1);
-    badgePositions = partners.map((_, i) => ({
-      x: pzoneX + pzoneW / 2,
-      y: spacing * (i + 1),
-    }));
-  }
-
   window.startGame = function () {
-    // Stop any existing loop first
     if (animId) cancelAnimationFrame(animId);
-    // Ensure canvas resolution matches attributes
     canvas.width = W;
     canvas.height = H;
     score = 0;
@@ -286,7 +230,6 @@
     floatingTexts = [];
     shieldY = H / 2;
     Object.keys(keys).forEach(k => { keys[k] = false; });
-    generateBadgePositions();
     running = true;
     loop();
   };
