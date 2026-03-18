@@ -509,6 +509,7 @@ body {
 .game-subtitle {
   font-size: 12px;
   color: var(--text-muted);
+  opacity: 0.5;
 }
 
 #gameCanvas {
@@ -533,6 +534,7 @@ body {
 
 .game-hint {
   color: var(--text-muted);
+  opacity: 0.4;
 }
 
 .game-loading {
